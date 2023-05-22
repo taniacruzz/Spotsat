@@ -2,10 +2,10 @@ from rest_framework.response import Response # retorna dados convertidos em uma 
 from rest_framework.decorators import api_view
 from rest_framework import status #  constantes usadas para retornar respostas adequadas a diferentes situações em sua API
 from rest_framework import generics
-from api.models import User
-from api.serializers import UserSerializer
+from api.models import User, Place
+from api.serializers import UserSerializer, PlaceSerializer
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+
 
 # retornar mensagem padrão
 @api_view(['GET'])
@@ -28,6 +28,18 @@ def authenticateUser(request):
     except serializer.ValidationError as e:
         return Response({'message': 'Formato da requisição inválido!'}, status=400)
 
+# retornar places
+@api_view(['GET'])
+def returnPlaces(request):
+    places = Place.objects.all()
+    serializer = PlaceSerializer(places, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+def returnPlacesById(request):
+    places = Place.objects.filter(id=1)
+    serializer = PlaceSerializer(places, many=True)
+    return Response(serializer.data)
 
    
 
