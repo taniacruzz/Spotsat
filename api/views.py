@@ -1,10 +1,11 @@
+from psycopg2 import IntegrityError
 from rest_framework.response import Response # retorna dados convertidos em uma resposta HTTP adequada
 from rest_framework.decorators import api_view
 from rest_framework import status #  constantes usadas para retornar respostas adequadas a diferentes situações em sua API
-from rest_framework import generics
 from api.models import User, Place
 from api.serializers import UserSerializer, PlaceSerializer
-from django.views.decorators.csrf import csrf_exempt
+from api.objects import createPlaces
+from django.db.models import Max
 
 
 # retornar mensagem padrão
@@ -27,7 +28,7 @@ def authenticateUser(request):
             return Response({'message': 'Falha ao autenticar!'}, status=401)
     except serializer.ValidationError as e:
         return Response({'message': 'Formato da requisição inválido!'}, status=400)
-
+    
 # retornar places
 @api_view(['GET'])
 def returnPlaces(request):
@@ -36,10 +37,71 @@ def returnPlaces(request):
     return Response(serializer.data)
 
 @api_view(['GET'])
-def returnPlacesById(request):
-    places = Place.objects.filter(id=1)
+def returnPlacesById(request, id):
+    obj = Place.objects.get(id=id)
+    # places = Place.objects.filter(id=id)
+    serializer = PlaceSerializer(obj, many=True)
+    return Response(serializer.data)
+
+# retornar places, com persistência
+@api_view(['GET'])
+def returnPlacesBD(request):
+    places = createPlaces()
     serializer = PlaceSerializer(places, many=True)
     return Response(serializer.data)
 
-   
+# retorna objetos do tipo place com id=1, com persistência
+@api_view(['GET'])
+def returnPlacesByIdBD(request, id):
+    places = createPlaces()
+    # lista que só receberá objetos com id=1
+    filtered_places = []
+    for place in places:
+        if place.id == id:
+            filtered_places.append(place)
+    serializer = PlaceSerializer(filtered_places, many=True)
+    return Response(serializer.data)
 
+@api_view(['POST'])
+def newPlace(request):
+    serializer = PlaceSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # essa exceção ocorre quando há Id(PK) duplicado
+        except KeyError as exc:
+            # vejo qual o maior id da tabela, para pegar o valor seguinte
+            max_key = Place.objects.aggregate(max_key=Max('pk'))['max_key']
+            next_pk = max_key + 1
+            serializer.validated_data['id'] = next_pk
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400)
+
+@api_view(['PUT'])
+def updatePlace(request, id):
+    try:
+        obj = Place.objects.get(id=id)
+    except Place.DoesNotExist:
+        return Response({'message': 'Objeto não encontrado'}, status=400)
+    serializer = PlaceSerializer(obj, data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status = status.HTTP_200_OK)
+    return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+def deletePlace(request, id):
+    try:
+        obj = Place.objects.get(id=id)
+    except Place.DoesNotExist:
+        return Response({'message': 'not found'}, status=404)
+    obj.delete()
+    return Response({'message': 'Lugar removido com sucesso!'}, status=200)
+    
+
+    
+    
