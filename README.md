@@ -1,8 +1,9 @@
 # Desafio para Processo Seletivo - Spotsat
 ## Rotas
 * 'v1/'
+* 'v1/auth/'
 * 'v2/places/'
-* 'v2/places/:<int:id>'
+* 'v2/places/:<int:id>' (Exemplo: v2/places/:1)
 * 'v3/places/'
 * 'v3/places/update/:<int:id>' (Exemplo: v3/places/update/:1)
 * 'v3/places/delete/:<int:id>' (Exemplo: v3/places/delete/:1)
