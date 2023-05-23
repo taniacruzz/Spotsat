@@ -123,36 +123,7 @@ def distance(request, id1, id2):
     return Response((f"distance in meters: %.2f" %distance), status = status.HTTP_200_OK)
 
 
-# retorna objetos do tipo place com id=1, com persistência
-@api_view(['GET'])
-def returnPlacesByIdBD(request, id):
-    places = createPlaces()
-    # lista que só receberá objetos com id=1
-    filtered_places = []
-    for place in places:
-        if place.id == id:
-            filtered_places.append(place)
-    serializer = PlaceSerializer(filtered_places, many=True)
-    return Response(serializer.data)
 
-@api_view(['POST'])
-def newPlace(request):
-    serializer = PlaceSerializer(data=request.data)
-    if serializer.is_valid():
-        try:
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # essa exceção ocorre quando há Id(PK) duplicado
-        except KeyError as exc:
-            # vejo qual o maior id da tabela, para pegar o valor seguinte
-            max_key = Place.objects.aggregate(max_key=Max('pk'))['max_key']
-            next_pk = max_key + 1
-            serializer.validated_data['id'] = next_pk
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-    return Response(serializer.errors, status=status.HTTP_400)
 
 
     
