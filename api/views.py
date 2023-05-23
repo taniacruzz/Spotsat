@@ -122,6 +122,35 @@ def distance(request, id1, id2):
     # distance = round(distance, 2)
     return Response((f"distance in meters: %.2f" %distance), status = status.HTTP_200_OK)
 
+@api_view(['GET'])
+def placesInRatio(request):
+    latitude = float(request.GET.get('latitude'))
+    longitude = float(request.GET.get('longitude'))
+    radius = float(request.GET.get('radius'))
+    
+    # inicio lista na qual serão incluosos os lugares dentro do radius
+    places_insideRatio = []
+    transformer = pyproj.Transformer.from_crs('EPSG:4326', 'EPSG:31983', always_xy=True)
+    utm_east, utm_north = transformer.transform(longitude, latitude)
+    objs = Place.objects.all()
+    for obj in objs:
+        lat_obj = obj.latitude
+        lon_obj = obj.longitude
+        utm_east_obj, utm_north_obj = transformer.transform(lon_obj, lat_obj)
+        distance = (((utm_east-utm_east_obj)**2 + (utm_north-utm_north_obj)**2)**0.5)
+        if distance <= radius:
+            serializer_obj = PlaceSerializer(obj)
+            serialized_data = serializer_obj.data
+            serialized_data['distance'] = distance
+            places_insideRatio.append(serialized_data)
+    return Response(places_insideRatio)
+
+
+
+
+
+    
+
 
 
 
