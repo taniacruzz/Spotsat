@@ -1,4 +1,5 @@
 # Desafio para Processo Seletivo - Spotsat
+API com Django Rest Framework para manipulação de dados geográficos
 ## Rotas
 * 'v1/'
 * 'v1/auth/'
